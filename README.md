@@ -64,15 +64,10 @@ FROM_EMAIL=your_verified_sender@example.com
 
 ---
 
-## 📸 Screenshots
-(Add your app screenshots here)
 
----
 
 ## 🤝 Contributing
 Pull requests are welcome. For major changes, open an issue first.  
 
 ---
 
-## 📜 License
-MIT License © 2025 Deal Dash Contributors
