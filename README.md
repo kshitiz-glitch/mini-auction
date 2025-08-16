@@ -41,11 +41,10 @@ This repo includes a render.yaml for one-click deploy. It provisions Postgres + 
 1. Push code to GitHub.
 2. In Render, create a Blueprint Deploy → select this repo.
 3. Set SENDGRID_API_KEY and FROM_EMAIL in the web service’s environment variables.
-📸 Screenshots
-Auction Dashboard – screenshot-auction.png
-Invoice Example – screenshot-invoice.png
+
 🤝 Contributing
 Contributions are welcome!
 1. Fork this repo
 2. Create a feature branch
 3. Submit a PR 🚀
+
