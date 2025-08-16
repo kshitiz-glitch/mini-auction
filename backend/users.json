@@ -1,0 +1,7 @@
+[
+  { "id": 1, "handle": "playerA", "pin": "1111", "email": "kshitizgaur13@gmail.com" },
+  { "id": 2, "handle": "playerB", "pin": "2222", "email": "b@example.com" },
+  { "id": 3, "handle": "playerC", "pin": "3333", "email": "c@example.com" },
+  { "id": 4, "handle": "playerD", "pin": "4444", "email": "d@example.com" },
+  { "id": 5, "handle": "playerE", "pin": "5555", "email": "e@example.com" }
+]

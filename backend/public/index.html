@@ -1,0 +1,389 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Auction — Step 7 (UX + Safeguards)</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    :root { color-scheme: light dark; }
+    html, body { height: 100%; }
+    body { margin:0; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; background:#0b1220; color:#e6e9f0; }
+    .wrap { min-height:100%; display:grid; place-items:start center; padding:24px; }
+    .stack { width:100%; max-width: 1100px; display:grid; gap:18px; }
+    .card { background:#111827; border:1px solid #1f2937; border-radius:16px; padding:20px; box-shadow:0 10px 30px rgba(0,0,0,.25); }
+    h1 { margin:0 0 12px; font-size:24px; }
+    h2 { margin:0 0 10px; font-size:18px; }
+    .row { display:grid; gap:12px; }
+    @media (min-width:760px){ .row.two{ grid-template-columns:1fr 1fr; } .row.three{ grid-template-columns:1fr 1fr 1fr; } }
+    label { display:block; font-size:14px; margin-bottom:6px; color:#cbd5e1; }
+    input, textarea, select { width:100%; padding:10px 12px; border-radius:10px; border:1px solid #374151; background:#0f172a; color:#e6e9f0; }
+    textarea { min-height:80px; resize:vertical; }
+    .btn { margin-top:12px; display:inline-flex; gap:8px; align-items:center; padding:10px 14px; border-radius:10px; background:#2563eb; color:#fff; border:none; font-weight:600; cursor:pointer; }
+    .btn.secondary { background:#334155; }
+    .btn.ghost { background:transparent; border:1px solid #374151; }
+    .error { color:#fca5a5; min-height:20px; margin-top:6px; }
+    .ok { color:#34d399; }
+    .badge { display:inline-block; padding:6px 10px; border-radius:999px; font-weight:700; font-size:12px; }
+    .b-scheduled { background:#fde68a; color:#1f1300; }
+    .b-live { background:#a7f3d0; color:#062014; }
+    .b-ended { background:#cbd5e1; color:#0b1220; }
+    .b-closed { background:#93c5fd; color:#0b1220; }
+    .table { width:100%; border-collapse: collapse; }
+    .table th, .table td { border-bottom:1px solid #1f2937; padding:10px; text-align:left; vertical-align: top; }
+    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+    .sr { font-size:12px; color:#cbd5e1; margin-top:4px; }
+    .muted { opacity:.8; }
+    .pill { display:inline-block; padding:6px 10px; border-radius: 999px; border:1px solid #1f2937; background:#0f172a; }
+    .timer { font-variant-numeric: tabular-nums; }
+    a.link { color:#93c5fd; text-decoration: underline; }
+    .toast { position: fixed; right: 18px; bottom: 18px; background:#111827; border:1px solid #1f2937; color:#e6e9f0; padding:10px 14px; border-radius:12px; box-shadow:0 10px 30px rgba(0,0,0,.35); opacity:0; transform: translateY(8px); transition: all .2s; }
+    .toast.show { opacity:1; transform: translateY(0); }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="stack">
+      <!-- Auth -->
+      <div class="card">
+        <h1>🔐 Auth</h1>
+        <div class="row two">
+          <div>
+            <label>Handle</label>
+            <select id="handle"></select>
+          </div>
+          <div>
+            <label>PIN</label>
+            <input id="pin" type="password" placeholder="e.g., 1111" />
+          </div>
+        </div>
+        <div class="row two">
+          <button class="btn" id="loginBtn">Log In</button>
+          <button class="btn secondary" id="logoutBtn">Log Out</button>
+        </div>
+        <div id="authMsg" class="error"></div>
+        <div class="sr" id="sessionStatus">Not logged in</div>
+        <div class="sr">/me → <span id="meJson">—</span></div>
+      </div>
+
+      <!-- Create Auction -->
+      <div class="card">
+        <h2>📦 Create Auction</h2>
+        <p class="muted">You must be logged in. You become the seller.</p>
+        <div class="row two">
+          <div><label>Item name</label><input id="itemName" placeholder="e.g., MacBook Pro 14”" /></div>
+          <div><label>Starting price</label><input id="startPrice" type="number" step="0.01" placeholder="e.g., 1000" /></div>
+        </div>
+        <div class="row two">
+          <div><label>Bid increment</label><input id="bidIncrement" type="number" step="0.01" placeholder="e.g., 50" /></div>
+          <div><label>Go live at</label><input id="goLiveAt" type="datetime-local" /></div>
+        </div>
+        <div class="row two">
+          <div><label>Duration (seconds)</label><input id="durationSeconds" type="number" placeholder="e.g., 300" /></div>
+          <div>
+            <label>&nbsp;</label>
+            <button class="btn ghost" id="quickDemoBtn" title="Creates an auction that goes live in 15s and lasts 60s">Create quick demo auction</button>
+          </div>
+        </div>
+        <div class="row">
+          <label>Description</label>
+          <textarea id="description" placeholder="Optional details…"></textarea>
+        </div>
+        <button class="btn" id="createAuctionBtn">Create Auction</button>
+        <div id="createMsg" class="error"></div>
+      </div>
+
+      <!-- Auctions -->
+      <div class="card">
+        <h2>🧾 Auctions</h2>
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Item</th>
+              <th>Status</th>
+              <th>Start ↦ End</th>
+              <th>Pricing</th>
+              <th>Highest</th>
+              <th>Seller</th>
+              <th>ID</th>
+              <th>Bid</th>
+              <th>Decision / Invoice</th>
+            </tr>
+          </thead>
+          <tbody id="auctionsTbody"><tr><td colspan="9" class="muted">No auctions yet.</td></tr></tbody>
+        </table>
+        <div id="bidMsg" class="error"></div>
+      </div>
+    </div>
+  </div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    const $ = s => document.querySelector(s);
+    const handleEl = $("#handle"), pinEl = $("#pin");
+    const loginBtn = $("#loginBtn"), logoutBtn = $("#logoutBtn");
+    const createBtn = $("#createAuctionBtn"), quickDemoBtn = $("#quickDemoBtn");
+    const itemNameEl = $("#itemName"), startPriceEl = $("#startPrice"), bidIncrementEl = $("#bidIncrement");
+    const goLiveAtEl = $("#goLiveAt"), durationSecondsEl = $("#durationSeconds"), descriptionEl = $("#description");
+    const sessionStatus = $("#sessionStatus"), meJson = $("#meJson");
+    const authMsg = $("#authMsg"), createMsg = $("#createMsg"), bidMsg = $("#bidMsg");
+    const auctionsTbody = $("#auctionsTbody");
+
+    let socket = null; const joinedRooms = new Set(); let currentUser = null;
+    const countdowns = new Map(); // auctionId -> interval id
+
+    function toast(text){ let t=document.querySelector(".toast"); if(!t){ t=document.createElement("div"); t.className="toast"; document.body.appendChild(t);} t.textContent=text; t.classList.add("show"); setTimeout(()=>t.classList.remove("show"),1500); }
+    function setToken(t){ if(t) localStorage.setItem("token", t); else localStorage.removeItem("token"); }
+    function getToken(){ return localStorage.getItem("token"); }
+    function authHeader(){ const t=getToken(); return t?{ Authorization:"Bearer "+t }:{}; }
+    const badge = s => `<span class="badge ${s==="live"?"b-live":s==="ended"?"b-ended":s==="closed"?"b-closed":"b-scheduled"}">${s}</span>`;
+
+    function decisionCellHtml(a){
+      return `<div data-decision="${a.id}" class="sr muted">—</div><div class="sr" data-invoice="${a.id}"></div>`;
+    }
+    function rowBidControls(a){
+      const dis=a.status!=="live"?"disabled":""; const ph=a.status==="live"?"Amount":"Not live";
+      return `<div class="sr timer" data-timer="${a.id}">—</div>
+        <div class="sr" data-nextmin="${a.id}">Next min: —</div>
+        <div class="input-row">
+          <input type="number" step="0.01" placeholder="${ph}" ${dis} data-bid-amount="${a.id}" />
+          <button class="btn" ${dis} data-bid-btn="${a.id}">Place</button>
+        </div>`;
+    }
+    function rowHtml(a){
+      const start=a.go_live_at?new Date(a.go_live_at).getTime():NaN;
+      const end=isNaN(start)?NaN:start+a.duration_seconds*1000;
+      const startStr=a.go_live_at?new Date(a.go_live_at).toLocaleString():"—";
+      const endStr=isNaN(end)?"—":new Date(end).toLocaleString();
+      return `<tr data-auction-row="${a.id}">
+        <td><strong>${a.item_name}</strong><div class="sr">${a.description||""}</div></td>
+        <td data-status="${a.id}">${badge(a.status)}</td>
+        <td class="mono">${startStr}<div class="sr">→ ${endStr}</div></td>
+        <td class="mono">start ₹${a.start_price}<div class="sr">+ step ₹${a.bid_increment}</div></td>
+        <td class="mono" data-highest="${a.id}">—</td>
+        <td>${a.seller_handle} <div class="sr mono">#${a.seller_id}</div></td>
+        <td class="mono">${a.id}</td>
+        <td>${rowBidControls(a)}</td>
+        <td>${decisionCellHtml(a)}</td>
+      </tr>`;
+    }
+    function setHighest(id, txt){ const el=document.querySelector(`[data-highest="${id}"]`); if(el) el.textContent = txt ?? "—"; }
+    function setStatus(id, s){
+      const el=document.querySelector(`[data-status="${id}"]`); if(el) el.innerHTML = badge(s);
+      const input=document.querySelector(`[data-bid-amount="${id}"]`); const btn=document.querySelector(`[data-bid-btn="${id}"]`);
+      const dis=s!=="live"; if(input) input.disabled=dis, input.placeholder=dis?"Not live":"Amount"; if(btn) btn.disabled=dis;
+    }
+
+    async function loadUsers(){
+      try{ const r=await fetch("/users"); const d=await r.json(); handleEl.innerHTML=""; (d.users||[]).forEach(u=>{ const o=document.createElement("option"); o.value=u.handle; o.textContent=u.handle; handleEl.appendChild(o); }); }
+      catch{ ["playerA","playerB","playerC","playerD"].forEach(h=>{ const o=document.createElement("option"); o.value=h; o.textContent=h; handleEl.appendChild(o); }); }
+    }
+    async function login(){
+      authMsg.textContent=""; const handle=handleEl.value; const pin=(pinEl.value||"").trim(); if(!pin){authMsg.textContent="Enter PIN"; return;}
+      const r=await fetch("/auth/login",{method:"POST",headers:{ "Content-Type":"application/json" }, body:JSON.stringify({handle,pin})});
+      const d=await r.json(); if(!r.ok||!d.ok){ authMsg.textContent=d.error||"Login failed"; return; }
+      setToken(d.token); pinEl.value=""; await loadMe(); toast("Logged in");
+    }
+    function logout(){ setToken(null); currentUser=null; sessionStatus.textContent="Not logged in"; meJson.textContent="—"; }
+    async function loadMe(){
+      try{ const r=await fetch("/me",{headers:authHeader()}); const d=await r.json(); meJson.textContent=JSON.stringify(d,null,2); currentUser=d.ok?d.user:null;
+        sessionStatus.textContent=currentUser?`Logged in as ${currentUser.handle} (id: ${currentUser.id})`:"Not logged in";
+      }catch{ currentUser=null; sessionStatus.textContent="Not logged in"; meJson.textContent="—"; }
+    }
+
+    // Quick demo
+    quickDemoBtn?.addEventListener("click", ()=>{
+      const now=new Date(); const live=new Date(now.getTime()+15*1000); // 15s
+      itemNameEl.value = "Demo Item";
+      startPriceEl.value = "1000";
+      bidIncrementEl.value = "50";
+      goLiveAtEl.value = new Date(live.getTime()-live.getTimezoneOffset()*60000).toISOString().slice(0,16);
+      durationSecondsEl.value = "60";
+      descriptionEl.value = "Autofilled demo auction";
+      toast("Filled demo auction fields");
+    });
+
+    async function createAuction(){
+      createMsg.textContent=""; const body={ item_name:(itemNameEl.value||"").trim(), description:(descriptionEl.value||"").trim(),
+        start_price:Number(startPriceEl.value), bid_increment:Number(bidIncrementEl.value),
+        go_live_at:goLiveAtEl.value?new Date(goLiveAtEl.value).toISOString():null, duration_seconds:Number(durationSecondsEl.value) };
+      if(!body.item_name) return createMsg.textContent="Item name required";
+      if(!Number.isFinite(body.start_price)) return createMsg.textContent="Starting price required";
+      if(!Number.isFinite(body.bid_increment)||body.bid_increment<=0) return createMsg.textContent="Bid increment must be > 0";
+      if(!body.go_live_at) return createMsg.textContent="Go live at required";
+      if(!Number.isFinite(body.duration_seconds)||body.duration_seconds<10) return createMsg.textContent="Duration must be ≥ 10s";
+      const r=await fetch("/auctions",{method:"POST",headers:{ "Content-Type":"application/json", ...authHeader() }, body:JSON.stringify(body)}); const d=await r.json();
+      if(!r.ok||!d.ok) return createMsg.textContent=d.error||"Create failed";
+      itemNameEl.value=""; descriptionEl.value=""; startPriceEl.value=""; bidIncrementEl.value=""; goLiveAtEl.value=""; durationSecondsEl.value="";
+      await loadAuctions(); createMsg.textContent="Created ✔"; createMsg.classList.remove("error"); createMsg.classList.add("ok");
+      setTimeout(()=>{ createMsg.textContent=""; createMsg.classList.remove("ok"); createMsg.classList.add("error"); }, 1500);
+    }
+
+    async function fetchHighest(id){ try{ const r=await fetch(`/auctions/${id}/highest`); const d=await r.json(); return d?.highest||null; }catch{ return null; } }
+    async function fetchNextMin(id){ try{ const r=await fetch(`/auctions/${id}/next-min`); const d=await r.json(); return d?.nextMin??null; }catch{ return null; } }
+
+    // Countdown handling
+    function setTimer(auctionId, endsAt){
+      clearInterval(countdowns.get(auctionId));
+      const el=document.querySelector(`[data-timer="${auctionId}"]`);
+      if(!el){ return; }
+      if(!endsAt){ el.textContent="—"; return; }
+      function tick(){
+        const left = new Date(endsAt).getTime() - Date.now();
+        if (isNaN(left)) { el.textContent="—"; return; }
+        if (left <= 0) { el.textContent = "00:00"; clearInterval(countdowns.get(auctionId)); return; }
+        const s = Math.floor(left/1000);
+        const mm = String(Math.floor(s/60)).padStart(2,"0");
+        const ss = String(s%60).padStart(2,"0");
+        el.textContent = `${mm}:${ss}`;
+      }
+      tick();
+      const id=setInterval(tick, 500);
+      countdowns.set(auctionId, id);
+    }
+
+    // Render helpers
+    function decisionLabel(latest){
+      if(!latest) return "—";
+      let t=`Latest: ${latest.type}`; if(latest.price) t+=` @ ₹${latest.price}`; t+=` • by ${latest.by_handle}`;
+      return `<span class="pill">${t}</span>`;
+    }
+    async function renderDecisionUI(id){
+      const host=document.querySelector(`[data-decision="${id}"]`); if(!host) return;
+      const info=await fetch(`/auctions/${id}/decision`).then(r=>r.json()).catch(()=>null); const latest=info?.latest||null;
+      const statusCell=document.querySelector(`[data-status="${id}"]`); const isEnded=statusCell?.textContent?.includes("ended"); const isClosed=statusCell?.textContent?.includes("closed");
+      const row=document.querySelector(`[data-auction-row="${id}"]`); const sellerText=row?.querySelector("td:nth-child(6)")?.textContent||""; const amSeller=currentUser && sellerText.includes(currentUser.handle);
+      const highestText=document.querySelector(`[data-highest="${id}"]`)?.textContent||""; const amHighest=currentUser && highestText.includes(`by ${currentUser.handle}`);
+      host.innerHTML = decisionLabel(latest);
+      if(amSeller && isEnded && !isClosed){
+        host.innerHTML += `<div class="row two" style="margin-top:8px">
+          <button class="btn" data-dec-accept="${id}">Accept</button>
+          <button class="btn secondary" data-dec-reject="${id}">Reject</button>
+        </div>
+        <div class="input-row" style="margin-top:8px">
+          <input type="number" step="0.01" placeholder="Counter price" data-dec-price="${id}" />
+          <button class="btn" data-dec-counter="${id}">Counter</button>
+        </div>`;
+      }
+      if(latest && latest.type==="counter" && amHighest && !isClosed){
+        host.innerHTML += `<div class="row two" style="margin-top:8px">
+          <button class="btn" data-ack-yes="${id}">Accept @ ₹${latest.price}</button>
+          <button class="btn secondary" data-ack-no="${id}">Reject</button>
+        </div>`;
+      }
+    }
+    async function renderInvoiceLink(id){
+      const host=document.querySelector(`[data-invoice="${id}"]`); if(!host) return;
+      const r=await fetch(`/auctions/${id}/invoice`); const d=await r.json(); host.innerHTML="";
+      if(d.ok && d.exists && d.url){
+        host.innerHTML = `<a class="link" href="${d.url}" target="_blank">⬇ Download invoice</a>`;
+      }
+    }
+
+    // Load list
+    async function loadAuctions(){
+      const r=await fetch("/auctions"); const d=await r.json(); const arr=d.auctions||[];
+      if(!arr.length){ auctionsTbody.innerHTML=`<tr><td colspan="9" class="muted">No auctions yet.</td></tr>`; return; }
+      auctionsTbody.innerHTML = arr.map(rowHtml).join("");
+      for(const a of arr){
+        const [h, nm] = await Promise.all([fetchHighest(a.id), fetchNextMin(a.id)]);
+        setHighest(a.id, h?`₹${h.amount} by ${h.bidder_handle}`:"—");
+        setStatus(a.id, a.status);
+        const nextEl=document.querySelector(`[data-nextmin="${a.id}"]`); if(nextEl && nm!=null) nextEl.textContent = `Next min: ₹${nm}`;
+        renderDecisionUI(a.id); renderInvoiceLink(a.id);
+      }
+      joinRoomsFor(arr);
+    }
+
+    // Bid place (client validation with next-min)
+    auctionsTbody.addEventListener("click", async (e)=>{
+      const btn=e.target.closest("[data-bid-btn]"); if(!btn) return;
+      bidMsg.textContent="";
+      const id=btn.getAttribute("data-bid-btn");
+      const input=document.querySelector(`[data-bid-amount="${id}"]`);
+      const [nmRes, highest] = await Promise.all([fetch(`/auctions/${id}/next-min`).then(r=>r.json()).catch(()=>null), fetchHighest(id)]);
+      const minNext = nmRes?.nextMin ?? null;
+      const val = Number(input?.value);
+      if(!Number.isFinite(val) || val <= 0) { bidMsg.textContent="Enter a valid bid amount"; return; }
+      if(minNext!=null && val < Number(minNext)) { bidMsg.textContent=`Bid must be ≥ ₹${minNext}`; return; }
+
+      const r=await fetch("/bids",{ method:"POST", headers:{ "Content-Type":"application/json", ...authHeader() }, body:JSON.stringify({ auction_id:id, amount:val }) });
+      const d=await r.json(); if(!r.ok||!d.ok){ bidMsg.textContent=d.error||"Failed to place bid"; return; }
+      input.value=""; toast("Bid placed ✔");
+    });
+
+    // Decisions
+    auctionsTbody.addEventListener("click", async (e)=>{
+      const acc=e.target.closest("[data-dec-accept]"); const rej=e.target.closest("[data-dec-reject]"); const ctr=e.target.closest("[data-dec-counter]");
+      if(!acc && !rej && !ctr) return;
+      const id=(acc||rej||ctr).getAttribute("data-dec-accept")||(acc||rej||ctr).getAttribute("data-dec-reject")||(acc||rej||ctr).getAttribute("data-dec-counter");
+      let body;
+      if(acc) body={action:"accept"};
+      if(rej) body={action:"reject"};
+      if(ctr){ const input=document.querySelector(`[data-dec-price="${id}"]`); const price=Number(input?.value); if(!Number.isFinite(price)||price<=0) return toast("Enter a valid counter price"); body={action:"counter",price}; }
+      const r=await fetch(`/auctions/${id}/decision`,{ method:"POST", headers:{ "Content-Type":"application/json", ...authHeader() }, body:JSON.stringify(body) });
+      const d=await r.json(); if(!r.ok||!d.ok) return toast(d.error||"Decision failed"); toast("Decision recorded"); await loadAuctions();
+    });
+    auctionsTbody.addEventListener("click", async (e)=>{
+      const yes=e.target.closest("[data-ack-yes]"); const no=e.target.closest("[data-ack-no]"); if(!yes && !no) return;
+      const id=(yes||no).getAttribute(yes?"data-ack-yes":"data-ack-no");
+      const latest=await fetch(`/auctions/${id}/decision`).then(r=>r.json()).then(x=>x.latest);
+      const r=await fetch(`/auctions/${id}/counter/ack`,{ method:"POST", headers:{ "Content-Type":"application/json", ...authHeader() }, body:JSON.stringify({ accept:!!yes, price: latest?.price }) });
+      const d=await r.json(); if(!r.ok||!d.ok) return toast(d.error||"Ack failed"); toast(yes?"Counter accepted":"Counter rejected"); await loadAuctions();
+    });
+
+    // Socket wiring
+    function joinRoomsFor(arr){
+      if(!socket) return;
+      for(const a of arr){
+        if(!joinedRooms.has(a.id)){
+          socket.emit("join_auction", { auctionId: a.id });
+          joinedRooms.add(a.id);
+        }
+      }
+    }
+    function connectSocket(){
+      socket = io();
+      socket.on("connect", ()=> console.log("[client] socket connected", socket.id));
+      socket.on("auction_state", ({ auctionId, status, highest, endsAt })=>{
+        setStatus(auctionId, status);
+        setHighest(auctionId, highest?`₹${highest.amount} by ${highest.bidder_handle}`:"—");
+        setTimer(auctionId, endsAt);
+        // refresh next-min whenever state changes
+        fetch(`/auctions/${auctionId}/next-min`).then(r=>r.json()).then(d=>{
+          const el=document.querySelector(`[data-nextmin="${auctionId}"]`);
+          if(el && d?.nextMin!=null) el.textContent = `Next min: ₹${d.nextMin}`;
+        }).catch(()=>{});
+      });
+      socket.on("new_bid", ({ auctionId, bid })=>{
+        setHighest(auctionId, `₹${bid.amount} by ${bid.bidder_handle}`);
+        toast(`New bid: ₹${bid.amount}`);
+      });
+      socket.on("outbid", ({ previous })=>{
+        if(currentUser && previous?.bidder_handle===currentUser.handle) toast("You've been outbid!");
+      });
+      socket.on("auction_ended", ()=> toast("Auction ended"));
+      socket.on("counter_offer", ({ auctionId })=>{ renderDecisionUI(auctionId); });
+      socket.on("seller_decision", ({ auctionId })=>{ renderDecisionUI(auctionId); renderInvoiceLink(auctionId); toast("Decision updated"); });
+      socket.on("invoice_ready", ({ auctionId })=>{ renderInvoiceLink(auctionId); toast("Invoice ready"); });
+      socket.on("disconnect", ()=> console.log("[client] socket disconnected"));
+    }
+
+    // Wire buttons
+    loginBtn.addEventListener("click", login);
+    logoutBtn.addEventListener("click", logout);
+    createBtn.addEventListener("click", createAuction);
+
+    // Init
+    (async function init(){
+      connectSocket();
+      await loadUsers();
+      await loadAuctions();
+      if(getToken()) await loadMe();
+    })();
+
+    setInterval(loadAuctions, 60000);
+  </script>
+
+  <div class="toast" style="display:none"></div>
+</body>
+</html>
