@@ -1,73 +1,45 @@
-# Deal Dash - Mini Auction Platform
+# Deal Dash – Real-Time Auction Platform
 
-🚀 **Deal Dash** is a real-time auction platform where buyers and sellers can interact, place bids, and finalize deals instantly.  
-Built with **React, Node.js, PostgreSQL, Redis, and Docker**, deployed seamlessly on **Render**.
+**Deal Dash** is a real-time auction web app for creating and participating in auctions with live bidding, decisions (accept/reject/counter), and invoice generation.
 
 ---
 
 ## ✨ Features
-- 🔑 User authentication for buyers & sellers
-- 📦 Create & manage auctions in real-time
-- 💸 Place, accept, reject, and counter bids
-- 📊 Live bidding updates with WebSockets
-- 🧾 Automatic invoice generation (PDF)
-- 📧 Email notifications using SendGrid
-- 📱 Responsive UI with modern design
+- 🔐 Handle + PIN login (demo accounts below)
+- ⚡ Live bidding via WebSockets
+- 🧮 Next-min bid & highest bid tracking
+- 🤝 Seller decisions: accept / reject / counter
+- 🧾 Auto PDF invoice + email (SendGrid)
+- 🗄 PostgreSQL + Redis, Dockerized
 
 ---
 
-## 🛠️ Tech Stack
-- **Frontend**: React + Vite + Tailwind CSS
-- **Backend**: Node.js (Express) + Sequelize
-- **Database**: PostgreSQL
-- **Cache & Realtime**: Redis + WebSockets
-- **Containerization**: Docker
-- **Deployment**: Render
+## 🧪 Demo Login Accounts (Public)
+Use any of these to log in and test:
+
+- Handle: **playerA** — PIN: **1234**
+- Handle: **playerB** — PIN: **2222**
+- Handle: **playerC** — PIN: **3333**
+- Handle: **playerD** — PIN: **4444**
+- Handle: **playerE** — PIN: **5555**
+
+> Login fields are **Handle** and **PIN** (not email/password).
 
 ---
 
-## 📂 Project Structure
-```
-/frontend   → React UI (Vite)
-/backend    → Node.js API + services
-/public     → Static files & invoices
-```
+## 🛠 Tech Stack
+Frontend: React + Vite + Tailwind  
+Backend: Node.js (Express) + Socket.IO  
+DB: PostgreSQL (Sequelize)  
+Cache/RT: Redis  
+Email: SendGrid  
+Deploy: Docker + Render
+
 ---
 
-## ⚡ Getting Started
-
-### 1️⃣ Clone the repo
+## ⚡ Quick Start (Docker)
 ```bash
-git clone https://github.com/your-username/deal-dash.git
-cd deal-dash
-```
-
-### 2️⃣ Run with Docker
-```bash
+# from repo root
 docker build -t auction .
-docker run -p 8080:8080 --env-file backend/.env auction
-```
-
-### 3️⃣ Access the app
-- 🌐 Open: `http://localhost:8080`
-- 🛠️ Debug emails: `http://localhost:8080/debug/email`
-
----
-
-## 📬 Environment Variables (`.env`)
-```env
-DATABASE_URL=your_postgres_url
-REDIS_URL=your_redis_url
-SENDGRID_API_KEY=your_key
-FROM_EMAIL=your_verified_sender@example.com
-```
-
----
-
-
-
-## 🤝 Contributing
-Pull requests are welcome. For major changes, open an issue first.  
-
----
-
+docker run --rm -p 8080:8080 --env-file backend/.env auction
+# open http://localhost:8080
