@@ -1,45 +1,79 @@
-# Deal Dash – Real-Time Auction Platform
+# DealDash 🛒⚡
+_A Real-Time Auction Platform_
 
-**Deal Dash** is a real-time auction web app for creating and participating in auctions with live bidding, decisions (accept/reject/counter), and invoice generation.
-
----
-
-## ✨ Features
-- 🔐 Handle + PIN login (demo accounts below)
-- ⚡ Live bidding via WebSockets
-- 🧮 Next-min bid & highest bid tracking
-- 🤝 Seller decisions: accept / reject / counter
-- 🧾 Auto PDF invoice + email (SendGrid)
-- 🗄 PostgreSQL + Redis, Dockerized
+DealDash is a mini-auction system where buyers and sellers connect in real time.  
+It includes live bidding, invoice generation, and email integration.
 
 ---
 
-## 🧪 Demo Login Accounts (Public)
-Use any of these to log in and test:
-
-- Handle: **playerA** — PIN: **1234**
-- Handle: **playerB** — PIN: **2222**
-- Handle: **playerC** — PIN: **3333**
-- Handle: **playerD** — PIN: **4444**
-- Handle: **playerE** — PIN: **5555**
-
-> Login fields are **Handle** and **PIN** (not email/password).
+## 🚀 Features
+- Live auctions with real-time bid updates (WebSockets)
+- Secure buyer/seller login with handle + PIN
+- Invoice PDF generation for winning bids
+- Email delivery of invoices (SendGrid)
+- Simple, responsive UI built with React + Tailwind
+- Backend powered by Node.js, Express, PostgreSQL, and Redis
 
 ---
 
-## 🛠 Tech Stack
-Frontend: React + Vite + Tailwind  
-Backend: Node.js (Express) + Socket.IO  
-DB: PostgreSQL (Sequelize)  
-Cache/RT: Redis  
-Email: SendGrid  
-Deploy: Docker + Render
+## 🛠️ Tech Stack
+**Frontend:** React, Vite, Tailwind CSS  
+**Backend:** Node.js, Express, Sequelize, WebSockets  
+**Database:** PostgreSQL (Supabase), Redis (Upstash)  
+**Email:** SendGrid API  
+**Containerization:** Docker, Render (deployment)
 
 ---
 
-## ⚡ Quick Start (Docker)
+## 🎮 Demo Accounts
+Use these handles & PINs to log in:
+
+| Handle   | PIN  |
+|----------|------|
+| playerA  | 1234 |
+| playerB  | 2222 |
+| playerC  | 3333 |
+| playerD  | 4444 |
+| playerE  | 5555 |
+
+---
+
+## ⚡ Quick Start
+
+### 1. Clone the repo
 ```bash
-# from repo root
+git clone https://github.com/your-username/dealdash.git
+cd dealdash
+```
+
+### 2. Setup backend
+```bash
+cd backend
+npm install
+cp .env.example .env   # add DB + SendGrid creds
+```
+
+### 3. Setup frontend
+```bash
+cd ../frontend
+npm install
+npm run dev
+```
+
+### 4. Run with Docker
+```bash
 docker build -t auction .
 docker run --rm -p 8080:8080 --env-file backend/.env auction
-# open http://localhost:8080
+```
+
+---
+
+## 🌐 Deployment
+- Deploy on **Render** or any container-ready platform
+- Use **Supabase/Postgres** for DB
+- Use **Upstash Redis** for cache/session
+- Verify your `FROM_EMAIL` in SendGrid
+
+---
+
+
